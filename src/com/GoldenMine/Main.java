@@ -170,17 +170,30 @@ public class Main {
                 4, 6, 7, 5, 4, 7,};
 
         ObjectElement element = null;
+        ObjectElement element2 = null;
+        ObjectElement element3 = null;
         try {
             element = new Texture(positions, textCoords, indices, ImageIO.read(new File("resources/textures/grassblock.png")));
+            element3 = new Texture(positions, textCoords, indices, ImageIO.read(new File("resources/textures/grassblock.png")));
+            //element3 = new Texture(positions, textCoords, indices, ImageIO.read(new File("resources/textures/grassblock.png")));
+            element2 = new Mesh(positions, textCoords, indices);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         ObjectSprite sprite = new ObjectSprite(element);
         sprite.setPosition(0, 0, 0f);
+
+        ObjectSprite sprite2 = new ObjectSprite(element2);
+        sprite2.setPosition(1f, 0, 0f);
+
+        ObjectSprite sprite3 = new ObjectSprite(element3);
+        sprite3.setPosition(1f, 1f, -2f);
         //sprite.setRotation(0,30,0);
 
         SpriteData data = palette.addSprite(sprite);
+        SpriteData data2 = palette.addSprite(sprite2);
+        SpriteData data3 = palette.addSprite(sprite3);
 
         new Thread() {
             public void run() {
@@ -188,6 +201,12 @@ public class Main {
                     data.addEffect(new EffectRotation(), new Interval(i*480, 480, new CalculateModelNaturalSin()), "xy", 0f, 360f, 0f, 360f, 0f, 360f);
                     data.addEffect(new EffectRotation(), new Interval((i+1)*480, 480, new CalculateModelNaturalSin()), "yz", 0f, 360f, 0f, 360f, 0f, 360f);
                     data.addEffect(new EffectRotation(), new Interval((i+2)*480, 480, new CalculateModelNaturalSin()), "zx", 0f, 360f, 0f, 360f, 0f, 360f);
+                    data2.addEffect(new EffectRotation(), new Interval(i*480, 480, new CalculateModelNaturalSin()), "xy", 0f, 360f, 0f, 360f, 0f, 360f);
+                    data2.addEffect(new EffectRotation(), new Interval((i+1)*480, 480, new CalculateModelNaturalSin()), "yz", 0f, 360f, 0f, 360f, 0f, 360f);
+                    data2.addEffect(new EffectRotation(), new Interval((i+2)*480, 480, new CalculateModelNaturalSin()), "zx", 0f, 360f, 0f, 360f, 0f, 360f);
+                    data3.addEffect(new EffectRotation(), new Interval(i*480, 480, new CalculateModelNaturalSin()), "xy", 0f, 360f, 0f, 360f, 0f, 360f);
+                    data3.addEffect(new EffectRotation(), new Interval((i+1)*480, 480, new CalculateModelNaturalSin()), "yz", 0f, 360f, 0f, 360f, 0f, 360f);
+                    data3.addEffect(new EffectRotation(), new Interval((i+2)*480, 480, new CalculateModelNaturalSin()), "zx", 0f, 360f, 0f, 360f, 0f, 360f);
                     /*try {
                         Thread.sleep(8000L);
                     } catch (InterruptedException e) {

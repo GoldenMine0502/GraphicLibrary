@@ -1,7 +1,9 @@
 package com.GoldenMine.graphic;
 
+import com.GoldenMine.util.Utils;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -10,6 +12,8 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public class Mesh implements ObjectElement {
+    private static ShaderProgram shaderProgram;
+    private static Transformation transformation = new Transformation();
 
     private final int vaoId;
 
@@ -82,14 +86,32 @@ public class Mesh implements ObjectElement {
     }
 
     @Override
-    public ShaderProgram initShaderProgram(Palette palette) {
+    public ShaderProgram getShaderProgram(Palette palette) {
+        if(shaderProgram==null) {
+            try {
+                shaderProgram = new ShaderProgram();
+                shaderProgram.createVertexShader(Utils.loadResource("resources/shaders/vertex/vertex.vs"));
+                shaderProgram.createFragmentShader(Utils.loadResource("resources/shaders/vertex/fragment.fs"));
+                shaderProgram.link();
 
-        return null;
+                // Create uniforms for world and projection matrices
+                shaderProgram.createUniform("projectionMatrix");
+                shaderProgram.createUniform("worldMatrix");
+            } catch(Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return shaderProgram;
     }
 
     @Override
-    public void setShaderProgram(Palette palette, ShaderProgram program) {
-
+    public void setShaderProgram(Palette palette, ObjectSprite sprite, ShaderProgram program) {
+        Matrix4f worldMatrix = transformation.getWorldMatrix(
+                sprite.getPosition(),
+                sprite.getRotation(),
+                sprite.getScale());
+        shaderProgram.setUniform("worldMatrix", worldMatrix);
     }
 
 

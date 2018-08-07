@@ -39,6 +39,7 @@ public class ShaderProgram {
     }
 
     public void setUniform(String uniformName, Matrix4f value) {
+        //System.out.println(uniformName);
         try (MemoryStack stack = MemoryStack.stackPush()) {
             // Dump the matrix into a float buffer
             FloatBuffer fb = stack.mallocFloat(16);

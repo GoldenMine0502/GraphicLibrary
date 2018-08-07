@@ -8,11 +8,14 @@ public class Transformation {
 
     private final Matrix4f modelViewMatrix;
 
+    private final Matrix4f worldMatrix;
+
     private final Matrix4f viewMatrix;
 
     public Transformation() {
         projectionMatrix = new Matrix4f();
         modelViewMatrix = new Matrix4f();
+        worldMatrix = new Matrix4f();
         viewMatrix = new Matrix4f();
     }
 
@@ -41,6 +44,16 @@ public class Transformation {
             viewMatrix.translate(0,0,0);
         }
         return viewMatrix;
+    }
+
+
+    public Matrix4f getWorldMatrix(Vector3f offset, Vector3f rotation, float scale) {
+        worldMatrix.identity().translate(offset).
+                rotateX((float)Math.toRadians(rotation.x)).
+                rotateY((float)Math.toRadians(rotation.y)).
+                rotateZ((float)Math.toRadians(rotation.z)).
+                scale(scale);
+        return worldMatrix;
     }
 
     public Matrix4f getModelViewMatrix(ObjectSprite gameItem, Matrix4f viewMatrix) {

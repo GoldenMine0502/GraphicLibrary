@@ -1,5 +1,6 @@
 package com.GoldenMine.graphic;
 
+import com.GoldenMine.util.Utils;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -9,6 +10,8 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.crypto.dsig.Transform;
+import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 
@@ -25,6 +28,14 @@ import static org.lwjgl.opengl.GL30.*;
  * Created by ehe12 on 2018-08-06.
  */
 public class Texture implements ObjectElement {
+    private static ShaderProgram shaderProgram;
+    private static Transformation transformation = new Transformation();
+
+    static {
+
+    }
+
+
     int texture;
 
     private final int vaoId;
@@ -149,13 +160,31 @@ public class Texture implements ObjectElement {
     }
 
     @Override
-    public ShaderProgram initShaderProgram(Palette palette) {
-        return null;
+    public ShaderProgram getShaderProgram(Palette palette) {
+        if(shaderProgram==null) {
+            try {
+                shaderProgram = new ShaderProgram();
+                shaderProgram.createVertexShader(Utils.loadResource("resources/shaders/texture/vertex.vs"));
+                shaderProgram.createFragmentShader(Utils.loadResource("resources/shaders/texture/fragment.fs"));
+                shaderProgram.link();
+
+                // Create uniforms for modelView and projection matrices and texture
+                shaderProgram.createUniform("projectionMatrix");
+                shaderProgram.createUniform("modelViewMatrix");
+                shaderProgram.createUniform("texture_sampler");
+            } catch(Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return shaderProgram;
     }
 
     @Override
-    public void setShaderProgram(Palette palette, ShaderProgram program) {
-
+    public void setShaderProgram(Palette palette, ObjectSprite sprite, ShaderProgram program) {
+        shaderProgram.setUniform("texture_sampler", 0);
+        Matrix4f worldMatrix = transformation.getModelViewMatrix(sprite, transformation.getViewMatrix(palette.getCamera()));
+        shaderProgram.setUniform("modelViewMatrix", worldMatrix);
     }
 
     @Override
@@ -196,5 +225,9 @@ public class Texture implements ObjectElement {
         // Delete the VAO
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoId);
+
+        if(shaderProgram!=null) {
+            shaderProgram.cleanUp();
+        }
     }
 }
