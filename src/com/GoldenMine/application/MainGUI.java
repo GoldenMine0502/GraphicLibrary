@@ -59,6 +59,6 @@ public class MainGUI {
             }
         });
 
-        palette.getWindow();
+        palette.getWindow().setClearColor(0.49f, 0.70f, 0.86f, 1f);
     }
 }
