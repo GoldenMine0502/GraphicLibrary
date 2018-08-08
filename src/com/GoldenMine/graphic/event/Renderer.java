@@ -1,4 +1,4 @@
-package com.GoldenMine.graphic;
+package com.GoldenMine.graphic.event;
 
 /**
  * Created by ehe12 on 2018-08-06.

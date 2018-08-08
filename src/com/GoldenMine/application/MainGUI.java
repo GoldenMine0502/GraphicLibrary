@@ -2,7 +2,7 @@ package com.GoldenMine.application;
 
 import com.GoldenMine.Utility.Point;
 import com.GoldenMine.graphic.Palette;
-import com.GoldenMine.graphic.PaletteHandler;
+import com.GoldenMine.graphic.event.PaletteHandler;
 
 /**
  * Created by ehe12 on 2018-08-07.

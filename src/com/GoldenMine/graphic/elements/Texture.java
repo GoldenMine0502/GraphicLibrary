@@ -1,5 +1,8 @@
-package com.GoldenMine.graphic;
+package com.GoldenMine.graphic.elements;
 
+import com.GoldenMine.graphic.Palette;
+import com.GoldenMine.graphic.util.ShaderProgram;
+import com.GoldenMine.graphic.util.Transformation;
 import com.GoldenMine.util.Utils;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -10,7 +13,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.crypto.dsig.Transform;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
@@ -181,7 +183,7 @@ public class Texture implements ObjectElement {
     }
 
     @Override
-    public void setShaderProgram(Palette palette, ObjectSprite sprite, ShaderProgram program) {
+    public void setShaderProgram(Palette palette, Sprite sprite, ShaderProgram program) {
         shaderProgram.setUniform("texture_sampler", 0);
         Matrix4f worldMatrix = transformation.getModelViewMatrix(sprite, transformation.getViewMatrix(palette.getCamera()));
         shaderProgram.setUniform("modelViewMatrix", worldMatrix);

@@ -1,21 +1,26 @@
 package com.GoldenMine.graphic;
 
 import com.GoldenMine.Utility.Point;
+import com.GoldenMine.graphic.camera.Camera;
+import com.GoldenMine.graphic.camera.MouseBoxSelectionDetector;
+import com.GoldenMine.graphic.elements.ObjectElement;
+import com.GoldenMine.graphic.elements.SpriteData;
+import com.GoldenMine.graphic.event.PaletteHandler;
+import com.GoldenMine.graphic.elements.Clickable;
+import com.GoldenMine.graphic.elements.Sprite;
+import com.GoldenMine.graphic.util.ShaderProgram;
+import com.GoldenMine.graphic.util.Transformation;
+import com.GoldenMine.graphic.util.Window;
 import com.GoldenMine.util.EffectData;
-import com.GoldenMine.util.Utils;
 import com.GoldenMine.thread.threadAPI.Delay;
+import java.nio.DoubleBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import org.joml.Matrix4f;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryStack;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
  * Created by ehe12 on 2018-08-05.
@@ -24,13 +29,15 @@ public class Palette {
     private Window window;
     private Camera camera;
 
+    private MouseBoxSelectionDetector selectionDetector;
+
     private Point paletteSize;
     private int fps;
 
     private boolean vSync;
 
-    private List<ObjectSprite> sprites = new ArrayList<>();
-    private HashMap<ObjectSprite, SpriteData> spriteData = new HashMap<>();
+    private List<Sprite> sprites = new ArrayList<>();
+    private HashMap<Sprite, SpriteData> spriteData = new HashMap<>();
 
     private Transformation transformation;
 
@@ -43,11 +50,53 @@ public class Palette {
 
         this.window = new Window(title, paletteSize);
 
+        this.camera = new Camera();
+
+        this.selectionDetector = new MouseBoxSelectionDetector();
+
         transformation = new Transformation();
 
         // Set the clear color
         window.setClearColor(0,0,0,0);
         window.enableDEPTH();
+
+        glfwSetMouseButtonCallback(window.getWindowId(), (window, button, action, mods) -> {
+            if(button == GLFW_MOUSE_BUTTON_1) {
+                if(action == GLFW_PRESS) {
+                    double posX;
+                    double posY;
+
+                    try(MemoryStack stack = MemoryStack.stackPush()) {
+                        DoubleBuffer posXBuffer = stack.mallocDouble(8);
+                        DoubleBuffer posYBuffer = stack.mallocDouble(8);
+
+                        glfwGetCursorPos(window, posXBuffer, posYBuffer);
+                        posX = posXBuffer.get();
+                        posY = posYBuffer.get();
+                    }
+
+                    //System.out.println(((float)(posX*2/paletteSize.getXInt())-1.f) + ", " + ((float)(2-posY*2/paletteSize.getYInt())-1.f));
+
+                    //System.out.println(camera);
+                    camera.updateViewMatrix();
+
+                    if(this.window != null) {
+
+                        Sprite sprite = selectionDetector.selectGameItem(sprites, this.window, (int)posX, (int)posY, camera);
+
+                    }
+                    //System.out.println(sprite!=null ? sprite.getPosition() : "null");
+                } else if(action == GLFW_RELEASE) {
+                    for(int i = 0; i < sprites.size(); i++) {
+                        Sprite sprite = sprites.get(i);
+
+                        if(sprite instanceof Clickable) {
+                            ((Clickable) sprite).setClicked(false);
+                        }
+                    }
+                }
+            }
+        });
     }
 
 
@@ -96,11 +145,14 @@ public class Palette {
 
             if(isResized) {
                 window.setViewport(0, 0, paletteSize.getXInt(), paletteSize.getYInt());
+                window.updateProjectionMatrix();
             }
+
+
 
             for(int index = 0; index < sprites.size(); index++) {
 
-                ObjectSprite sprite = sprites.get(index);
+                Sprite sprite = sprites.get(index);
                 SpriteData data = spriteData.get(sprite);
 
                 ObjectElement objectElement = sprite.getObjectElement();
@@ -113,10 +165,6 @@ public class Palette {
                     shaderProgram.setUniform("projectionMatrix", projectionMatrix);
                 }
                 objectElement.setShaderProgram(this, sprite, shaderProgram);
-
-                /*
-                shaderProgram 생성이 Mesh 생성 타이밍보다 느리다.
-                 */
 
                 data.eventTickPassed();
                 List<EffectData> effects = data.getEffects();
@@ -165,7 +213,7 @@ public class Palette {
         glfwSwapInterval(vSync ? 1 : 0);
     }
 
-    public SpriteData addSprite(ObjectSprite sprite) {
+    public SpriteData addSprite(Sprite sprite) {
         sprites.add(sprite);
 
         SpriteData data = new SpriteData();

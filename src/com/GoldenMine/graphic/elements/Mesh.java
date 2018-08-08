@@ -1,5 +1,8 @@
-package com.GoldenMine.graphic;
+package com.GoldenMine.graphic.elements;
 
+import com.GoldenMine.graphic.Palette;
+import com.GoldenMine.graphic.util.ShaderProgram;
+import com.GoldenMine.graphic.util.Transformation;
 import com.GoldenMine.util.Utils;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -106,7 +109,7 @@ public class Mesh implements ObjectElement {
     }
 
     @Override
-    public void setShaderProgram(Palette palette, ObjectSprite sprite, ShaderProgram program) {
+    public void setShaderProgram(Palette palette, Sprite sprite, ShaderProgram program) {
         Matrix4f worldMatrix = transformation.getWorldMatrix(
                 sprite.getPosition(),
                 sprite.getRotation(),

@@ -1,22 +1,19 @@
-package com.GoldenMine.graphic;
+package com.GoldenMine.graphic.elements;
 
 import org.joml.Vector3f;
 
 /**
- * Created by ehe12 on 2018-08-05.
+ * Created by ehe12 on 2018-08-08.
  */
-public class ObjectSprite {
+public class  Object3D {
     private static final int MINUS_Z = 2;
-
-    ObjectElement element;
 
     private final Vector3f position = new Vector3f();
     private final Vector3f rotation = new Vector3f();
 
     private float scale = 1.0f;
 
-    public ObjectSprite(ObjectElement element) {
-        this.element = element;
+    public Object3D() {
         setPosition(0,0,0);
     }
 
@@ -48,7 +45,4 @@ public class ObjectSprite {
         return rotation;
     }
 
-    public ObjectElement getObjectElement() {
-        return element;
-    }
 }
