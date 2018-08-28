@@ -1,6 +1,7 @@
 package com.GoldenMine;
 
 import com.GoldenMine.Utility.Point;
+import com.GoldenMine.event.EffectFader;
 import com.GoldenMine.event.EffectRotationer;
 import com.GoldenMine.graphic.*;
 import com.GoldenMine.graphic.elements.*;
@@ -228,11 +229,22 @@ public class Main {
 
                 new Thread() {
                     public void run() {
-                        for(int i = 0; i < 2; i++) {
+                        //data1.addEffect(new EffectFader(), new Interval(0, 240, new CalculateModelNaturalSin()), 1f, 0f);
+                        data3.addEffect(new EffectFader(), new Interval(480, 240, new CalculateModelNaturalSin()), 1f, 0f);
+                        data1.addEffect(new EffectFader(), new Interval(1000, 240, new CalculateModelNaturalSin()), 1f, 0f);
+                        data1.addEffect(new EffectFader(), new Interval(1500, 240, new CalculateModelNaturalSin()), 1f, 0f);
+
+                        for(int i = 0; i < 5; i++) {
                             data1.addEffect(new EffectRotationer(), new Interval(i*480, 480, new CalculateModelNaturalSin()), "xyz", 0f, 360f, 0f, 360f, 0f, 360f);
                             data2.addEffect(new EffectRotationer(), new Interval(i*480, 480, new CalculateModelNaturalSin()), "xyz", 0f, 360f, 0f, 360f, 0f, 360f);
                             data3.addEffect(new EffectRotationer(), new Interval(i*480, 480, new CalculateModelNaturalSin()), "xyz", 0f, 360f, 0f, 360f, 0f, 360f);
 
+                        }
+                        //data1.addEffect(new EffectFader(), new Interval(0, 240, new CalculateModelNaturalSin()), 1f, 0f);
+                        try {
+                            Thread.sleep(5000L);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
                 }.start();
@@ -242,6 +254,7 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
 
 
         /*

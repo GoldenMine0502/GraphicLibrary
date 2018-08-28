@@ -9,11 +9,24 @@ import com.GoldenMine.graphic.util.ShaderProgram;
 public interface ObjectElement {
     ShaderProgram getShaderProgram(Palette palette);
 
-    void setShaderProgram(Palette palette, Sprite sprite, ShaderProgram program);
+    //public abstract float getOpacity();
 
+    //public abstract float setOpacity(float opacity);
 
+    ObjectType getRenderObjectType();
+
+    void setShaderProgram(Palette palette, Sprite sprite,  SpriteData spriteData, ShaderProgram program);
 
     void render();
 
     void cleanUp();
+
+    float[] getPositions();
+    int[] getIndices();
+
+    float getXMaxSize();
+    float getYMaxSize();
+    float getZMaxSize();
+
+
 }

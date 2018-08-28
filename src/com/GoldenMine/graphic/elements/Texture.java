@@ -18,6 +18,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL15.*;
@@ -38,6 +39,7 @@ public class Texture implements ObjectElement {
     }
 
 
+    //BufferedImage source;
     int texture;
 
     private final int vaoId;
@@ -46,9 +48,55 @@ public class Texture implements ObjectElement {
 
     private final int vertexCount;
 
-    BufferedImage source;
+    private BufferedImage source;
+    //private BufferedImage editImage;
+
+    private int[] originalRaster;
+
+    private float[] positions;
+    private int[] indices;
+
+    float xMaxSize;
+    float yMaxSize;
+    float zMaxSize;
+
+    public static float[] getDefaultTex() {
+        return new float[] {
+                0.0f, 0.0f,
+                0.0f, 1f,
+                1f, 1f,
+                1f, 0.0f
+        };
+    }
+
+    public static int[] getDefaultIndices() {
+        return new int[] {
+                0, 1, 3, 3, 1, 2
+        };
+    }
+
+    public Texture(float[] positions, BufferedImage image) {
+        this(positions, getDefaultTex(), getDefaultIndices(), image);
+    }
 
     public Texture(float[] positions, float[] textCoords, int[] indices, BufferedImage image) {
+        this.positions = positions;
+        this.indices = indices;
+
+        for(int i = 0; i < positions.length; i+=3) {
+            float a = Math.abs(positions[i]);
+            if (a > xMaxSize)
+                xMaxSize = a;
+
+            float b = Math.abs(positions[i+1]);
+            if(b > yMaxSize)
+                yMaxSize = b;
+
+            float c = Math.abs(positions[i+2]);
+            if(c > zMaxSize)
+                zMaxSize = c;
+        }
+
         FloatBuffer posBuffer = null;
         FloatBuffer textCoordsBuffer = null;
         IntBuffer indicesBuffer = null;
@@ -108,49 +156,96 @@ public class Texture implements ObjectElement {
         ByteBuffer buffer = BufferUtils.createByteBuffer(image.getWidth() * image.getHeight() * 4); // RGBA
 
         DataBuffer dataBuffer = image.getData().getDataBuffer();
-        if (dataBuffer instanceof DataBufferInt) {
-
-            int[] raster = ((DataBufferInt) image.getData().getDataBuffer()).getData();
-
-            for (int i = 0; i < raster.length; i++) {
-                int pixel = raster[i];
-
-                buffer.put((byte) (pixel >>> 16));
-                buffer.put((byte) (pixel >>> 8));
-                buffer.put((byte) (pixel));
-                buffer.put((byte) (pixel >>> 24));
-            }
-
-
-        } else if (dataBuffer instanceof DataBufferByte) {
-            BufferedImage image2 = new BufferedImage(image.getWidth(), image.getHeight(),BufferedImage.TYPE_INT_ARGB);
+        if (dataBuffer instanceof DataBufferByte) {
+            BufferedImage image2 = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
             image2.getGraphics().drawImage(image, 0, 0, null);
 
-            int[] raster = ((DataBufferInt) image2.getData().getDataBuffer()).getData();
+            source = image2;
+            image = image2;
+        }
+        //if (dataBuffer instanceof DataBufferInt) {
 
-            for (int i = 0; i < raster.length; i++) {
-                int pixel = raster[i];
+        originalRaster = ((DataBufferInt) image.getData().getDataBuffer()).getData();
+        //editImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
-                buffer.put((byte) (pixel >>> 16));
-                buffer.put((byte) (pixel >>> 8));
-                buffer.put((byte) (pixel));
-                buffer.put((byte) (pixel >>> 24));
-            }
+        for (int i = 0; i < originalRaster.length; i++) {
+            int pixel = originalRaster[i];
 
-        } else {
-            throw new RuntimeException("cannot use bufferedimage");
+            buffer.put((byte) (pixel >>> 16));
+            buffer.put((byte) (pixel >>> 8));
+            buffer.put((byte) pixel);
+            buffer.put((byte) (pixel >>> 24));
+            //buffer.put((byte) (pixel >>> 24));
         }
 
         buffer.flip();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.getWidth(),
-                image.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.getWidth(), image.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+        //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.getWidth(), image.getHeight(), GL_RGBA, GL_UNSIGNED_INT, raster2);
+
+        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.getWidth(),image.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+        //glTexSubImage2D(getTarget(), 0, x, y, width, height, dataFormat, GL_UNSIGNED_BYTE, data);
+
+
+        //glEnable(GL_BLEND);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        /*
+        You can use glTexSubImage2D to modify an already existing texture.
+         */
+
+        //glTexSubImage2D();
+
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
         glGenerateMipmap(GL_TEXTURE_2D);
 
 
+    }
+
+    public void setImage(BufferedImage image) {
+        if(source!=null) {
+            source.flush();
+        }
+        this.source = image;
+    }
+
+    public void updateImage() {
+        ByteBuffer buffer = BufferUtils.createByteBuffer(source.getWidth() * source.getHeight() * 4); // RGBA
+
+        DataBuffer dataBuffer = source.getData().getDataBuffer();
+        if (dataBuffer instanceof DataBufferByte) {
+            BufferedImage image2 = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            image2.getGraphics().drawImage(source, 0, 0, null);
+
+            source = image2;
+        }
+        //if (dataBuffer instanceof DataBufferInt) {
+
+        originalRaster = ((DataBufferInt) source.getData().getDataBuffer()).getData();
+        //editImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+        for (int i = 0; i < originalRaster.length; i++) {
+            int pixel = originalRaster[i];
+
+            buffer.put((byte) (pixel >>> 16));
+            buffer.put((byte) (pixel >>> 8));
+            buffer.put((byte) pixel);
+            buffer.put((byte) (pixel >>> 24));
+            //buffer.put((byte) (pixel >>> 24));
+        }
+
+        buffer.flip();
+
+
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, source.getWidth(), source.getHeight(), GL_RGBA, GL_UNSIGNED_BYTE, buffer);
     }
 
     public int getVaoId() {
@@ -163,7 +258,7 @@ public class Texture implements ObjectElement {
 
     @Override
     public ShaderProgram getShaderProgram(Palette palette) {
-        if(shaderProgram==null) {
+        if (shaderProgram == null) {
             try {
                 shaderProgram = new ShaderProgram();
                 shaderProgram.createVertexShader(Utils.loadResource("resources/shaders/texture/vertex.vs"));
@@ -174,7 +269,8 @@ public class Texture implements ObjectElement {
                 shaderProgram.createUniform("projectionMatrix");
                 shaderProgram.createUniform("modelViewMatrix");
                 shaderProgram.createUniform("texture_sampler");
-            } catch(Exception ex) {
+                shaderProgram.createUniform("opacity");
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
@@ -183,10 +279,16 @@ public class Texture implements ObjectElement {
     }
 
     @Override
-    public void setShaderProgram(Palette palette, Sprite sprite, ShaderProgram program) {
+    public ObjectType getRenderObjectType() {
+        return ObjectType.TRIANGLE;
+    }
+
+    @Override
+    public void setShaderProgram(Palette palette, Sprite sprite,  SpriteData spriteData, ShaderProgram program) {
         shaderProgram.setUniform("texture_sampler", 0);
         Matrix4f worldMatrix = transformation.getModelViewMatrix(sprite, transformation.getViewMatrix(palette.getCamera()));
         shaderProgram.setUniform("modelViewMatrix", worldMatrix);
+        shaderProgram.setUniform("opacity", spriteData.getOpacity());
     }
 
     @Override
@@ -211,25 +313,46 @@ public class Texture implements ObjectElement {
 
     @Override
     public void cleanUp() {
-        glDisableVertexAttribArray(0);
+        //glDisableVertexAttribArray(0);
 
         // Delete the VBOs
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        for (int vboId : vboIdList) {
-            glDeleteBuffers(vboId);
-        }
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        //for (int vboId : vboIdList) {
+            //glDeleteBuffers(vboId);
+        //}
 
         // Delete the texture
         //texture.cleanup();
 
         glDeleteTextures(texture);
-
+        //System.out.println("success");
         // Delete the VAO
-        glBindVertexArray(0);
-        glDeleteVertexArrays(vaoId);
+        //glBindVertexArray(0);
+        //glDeleteVertexArrays(vaoId);
+    }
 
-        if(shaderProgram!=null) {
-            shaderProgram.cleanUp();
-        }
+    @Override
+    public float[] getPositions() {
+        return positions;
+    }
+
+    @Override
+    public int[] getIndices() {
+        return indices;
+    }
+
+    @Override
+    public float getXMaxSize() {
+        return xMaxSize;
+    }
+
+    @Override
+    public float getYMaxSize() {
+        return yMaxSize;
+    }
+
+    @Override
+    public float getZMaxSize() {
+        return zMaxSize;
     }
 }

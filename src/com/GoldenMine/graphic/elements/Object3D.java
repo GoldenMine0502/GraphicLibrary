@@ -6,10 +6,9 @@ import org.joml.Vector3f;
  * Created by ehe12 on 2018-08-08.
  */
 public class  Object3D {
-    private static final int MINUS_Z = 2;
 
-    private final Vector3f position = new Vector3f();
-    private final Vector3f rotation = new Vector3f();
+    protected final Vector3f position = new Vector3f();
+    protected final Vector3f rotation = new Vector3f();
 
     private float scale = 1.0f;
 
@@ -20,7 +19,7 @@ public class  Object3D {
     public void setPosition(float x, float y, float z) {
         position.x = x;
         position.y = y;
-        position.z = z-MINUS_Z;
+        position.z = z;
     }
 
     public void setRotation(float x, float y, float z) {

@@ -81,7 +81,7 @@ C  [lwjgl_opengl.dll+0x128f7]
 
 Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
 j  org.lwjgl.opengl.GL20.glCreateProgram()I+0
-j  com.GoldenMine.graphic.ShaderProgram.<init>()V+5
+j  com.GoldenMine.graphic.util.ShaderProgram.<init>()V+5
 j  com.GoldenMine.graphic.Palette.<init>(Ljava/lang/String;ILcom/GoldenMine/Utility/Point;)V+64
 j  com.GoldenMine.Main.main([Ljava/lang/String;)V+21
 v  ~StubRoutines::call_stub

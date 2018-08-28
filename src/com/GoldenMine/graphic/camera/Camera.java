@@ -1,5 +1,6 @@
 package com.GoldenMine.graphic.camera;
 
+import com.GoldenMine.graphic.elements.Object3D;
 import com.GoldenMine.graphic.util.Transformation;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -7,23 +8,16 @@ import org.joml.Vector3f;
 /**
  * Created by ehe12 on 2018-08-07.
  */
-public class Camera {
-
-    private final Vector3f position;
-
-    private final Vector3f rotation;
-
+public class Camera extends Object3D {
     private Matrix4f viewMatrix;
 
     public Camera() {
-        position = new Vector3f(0, 0, 0);
-        rotation = new Vector3f(0, 0, 0);
         viewMatrix = new Matrix4f();
     }
 
     public Camera(Vector3f position, Vector3f rotation) {
-        this.position = position;
-        this.rotation = rotation;
+        setPosition(position.x, position.y, position.z);
+        setRotation(rotation.x, rotation.y, rotation.z);
     }
 
     public Matrix4f getViewMatrix() {
@@ -32,16 +26,6 @@ public class Camera {
 
     public Matrix4f updateViewMatrix() {
         return Transformation.updateGenericViewMatrix(position, rotation, viewMatrix);
-    }
-
-    public Vector3f getPosition() {
-        return position;
-    }
-
-    public void setPosition(float x, float y, float z) {
-        position.x = x;
-        position.y = y;
-        position.z = z;
     }
 
     public void movePosition(float offsetX, float offsetY, float offsetZ) {

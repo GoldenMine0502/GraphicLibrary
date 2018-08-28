@@ -59,4 +59,8 @@ public class Interval {
     public boolean isTick() {
         return finishInterval < interval;
     }
+
+    public IntervalCalculateModel getCalculateAlgorithm() {
+        return calculate;
+    }
 }

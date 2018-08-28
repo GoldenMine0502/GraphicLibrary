@@ -30,8 +30,33 @@ public class Mesh implements ObjectElement {
 
     private boolean vertexMapping = false;
 
+    private float[] positions;
+    private int[] indices;
+
+    float xMaxSize;
+    float yMaxSize;
+    float zMaxSize;
+
     // position, color, index
+
     public Mesh(float[] positions, float[] colours, int[] indices) {
+        this.positions = positions;
+        this.indices = indices;
+
+        for(int i = 0; i < positions.length; i+=3) {
+            float a = Math.abs(positions[i]);
+            if (a > xMaxSize)
+                xMaxSize = a;
+
+            float b = Math.abs(positions[i+1]);
+            if(b > yMaxSize)
+                yMaxSize = b;
+
+            float c = Math.abs(positions[i+2]);
+            if(c > zMaxSize)
+                zMaxSize = c;
+        }
+
         FloatBuffer posBuffer = null;
         FloatBuffer colourBuffer = null;
         IntBuffer indicesBuffer = null;
@@ -100,6 +125,7 @@ public class Mesh implements ObjectElement {
                 // Create uniforms for world and projection matrices
                 shaderProgram.createUniform("projectionMatrix");
                 shaderProgram.createUniform("worldMatrix");
+                shaderProgram.createUniform("opacity");
             } catch(Exception ex) {
                 ex.printStackTrace();
             }
@@ -109,12 +135,18 @@ public class Mesh implements ObjectElement {
     }
 
     @Override
-    public void setShaderProgram(Palette palette, Sprite sprite, ShaderProgram program) {
+    public ObjectType getRenderObjectType() {
+        return ObjectType.TRIANGLE;
+    }
+
+    @Override
+    public void setShaderProgram(Palette palette, Sprite sprite,  SpriteData spriteData, ShaderProgram program) {
         Matrix4f worldMatrix = transformation.getWorldMatrix(
                 sprite.getPosition(),
                 sprite.getRotation(),
                 sprite.getScale());
         shaderProgram.setUniform("worldMatrix", worldMatrix);
+        shaderProgram.setUniform("opacity", spriteData.getOpacity());
     }
 
 
@@ -146,6 +178,31 @@ public class Mesh implements ObjectElement {
         // Delete the VAO
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoId);
+    }
+
+    @Override
+    public float[] getPositions() {
+        return positions;
+    }
+
+    @Override
+    public int[] getIndices() {
+        return indices;
+    }
+
+    @Override
+    public float getXMaxSize() {
+        return xMaxSize;
+    }
+
+    @Override
+    public float getYMaxSize() {
+        return yMaxSize;
+    }
+
+    @Override
+    public float getZMaxSize() {
+        return zMaxSize;
     }
 
     public boolean isVertexMapping() {

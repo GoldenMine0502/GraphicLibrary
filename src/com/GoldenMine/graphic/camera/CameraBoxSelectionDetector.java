@@ -1,7 +1,10 @@
 package com.GoldenMine.graphic.camera;
 
+import com.GoldenMine.graphic.Palette;
 import com.GoldenMine.graphic.elements.Clickable;
 import com.GoldenMine.graphic.elements.Sprite;
+import com.GoldenMine.graphic.elements.SpriteData;
+import java.util.Calendar;
 import java.util.List;
 import org.joml.Intersectionf;
 import org.joml.Vector2f;
@@ -24,22 +27,46 @@ public class CameraBoxSelectionDetector {
         nearFar = new Vector2f();
     }
 
-    public void selectGameItem(List<Sprite> gameItems, Camera camera) {
+    public void selectGameItem(Palette palette, Camera camera) {
         dir = camera.getViewMatrix().positiveZ(dir).negate();
-        selectGameItem(gameItems, camera.getPosition(), dir);
+        selectGameItem(palette, camera.getPosition(), dir);
     }
     
-    protected Sprite selectGameItem(List<Sprite> gameItems, Vector3f center, Vector3f dir) {
+    protected Sprite selectGameItem(Palette palette, Vector3f center, Vector3f dir) {
         Sprite selectedGameItem = null;
         float closestDistance = Float.POSITIVE_INFINITY;
 
-        for (Sprite gameItem : gameItems) {
-            if(gameItem instanceof Clickable)
-                ((Clickable)gameItem).setClicked(false);
+        for (Sprite gameItem : palette.getSprites()) {
+            SpriteData data = palette.getSpriteData(gameItem);
+            if(!data.isEnabled()) {
+                continue;
+            }
+            if(gameItem instanceof Clickable) {
+                if(((Clickable) gameItem).getClicked())
+                    ((Clickable) gameItem).setClicked(false);
+            }
             min.set(gameItem.getPosition());
             max.set(gameItem.getPosition());
-            min.add(-gameItem.getScale()/2, -gameItem.getScale()/2, -gameItem.getScale()/2);
-            max.add(gameItem.getScale()/2, gameItem.getScale()/2, gameItem.getScale()/2);
+
+            //gameItem.getObjectElement().getPositions();
+
+            float xMax = gameItem.getObjectElement().getXMaxSize();
+            float yMax = gameItem.getObjectElement().getYMaxSize();
+            float zMax = gameItem.getObjectElement().getZMaxSize();
+
+
+
+            //System.out.println(xMax + ", " + yMax + ", " + zMax);
+
+            //min.add(-gameItem.getScale()*xMax, -gameItem.getScale()*yMax, -gameItem.getScale()*zMax);
+            //max.add(gameItem.getScale()*xMax, gameItem.getScale()*yMax, gameItem.getScale()*zMax);
+
+            //System.out.println(min + ", " + max);
+
+            min.add(-gameItem.getScale()*xMax, -(float)gameItem.getScale()*yMax, -gameItem.getScale()*zMax-0.01f);
+            max.add(gameItem.getScale()*xMax, (float)gameItem.getScale()*yMax, gameItem.getScale()*zMax);
+
+            //Intersectionf.intersect
             if (Intersectionf.intersectRayAab(center, dir, min, max, nearFar) && nearFar.x < closestDistance) {
                 closestDistance = nearFar.x;
                 selectedGameItem = gameItem;
