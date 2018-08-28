@@ -3,24 +3,25 @@ package com.GoldenMine.graphic;
 import com.GoldenMine.Utility.Point;
 import com.GoldenMine.graphic.camera.Camera;
 import com.GoldenMine.graphic.camera.MouseBoxSelectionDetector;
-import com.GoldenMine.graphic.elements.ObjectElement;
-import com.GoldenMine.graphic.elements.SpriteData;
+import com.GoldenMine.graphic.elements.*;
 import com.GoldenMine.graphic.event.PaletteHandler;
-import com.GoldenMine.graphic.elements.Clickable;
-import com.GoldenMine.graphic.elements.Sprite;
+import com.GoldenMine.graphic.mouse.MousePicker2;
 import com.GoldenMine.graphic.util.ShaderProgram;
 import com.GoldenMine.graphic.util.Transformation;
 import com.GoldenMine.graphic.util.Window;
 import com.GoldenMine.util.EffectData;
 import com.GoldenMine.thread.threadAPI.Delay;
 import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFWMouseButtonCallbackI;
 import org.lwjgl.system.MemoryStack;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL11.glColor4f;
 
 /**
  * Created by ehe12 on 2018-08-05.
@@ -57,12 +58,18 @@ public class Palette {
         transformation = new Transformation();
 
         // Set the clear color
-        window.setClearColor(0,0,0,0);
+        window.setClearColor(0,0,0,1);
         window.enableDEPTH();
+        window.enableTransperencyFirst();
+
+
 
         glfwSetMouseButtonCallback(window.getWindowId(), (window, button, action, mods) -> {
             if(button == GLFW_MOUSE_BUTTON_1) {
                 if(action == GLFW_PRESS) {
+                    camera.updateViewMatrix();
+
+
                     double posX;
                     double posY;
 
@@ -75,15 +82,45 @@ public class Palette {
                         posY = posYBuffer.get();
                     }
 
+                    float x = (float)(2 * posX) / (float)paletteSize.getX() - 1.0f;
+                    float y = 1.0f - (float)(2 * posY) / (float)paletteSize.getY();
+
+                    /*{
+                        //Sprite sprite = MousePicker.get(this, (int) x, (int) y, 0.00001f);
+
+                        Sprite sprite = MousePicker.selectGameItem(this, getSprites(),(int)posX, (int)posY, getCamera());
+                        if (sprite instanceof Clickable) {
+                            System.out.println("selected");
+                            ((Clickable) sprite).setClicked(true);
+                        }
+                    }*/
+                    /*
+                    try {
+                        float x = (float)(2 * posX) / (float)paletteSize.getX() - 1.0f;
+                        float y = 1.0f - (float)(2 * posY) / (float)paletteSize.getY();
+
+                        System.out.println(x + ", " + y);
+
+                        FloatBuffer mousePos = MousePicker2.getOGLPos((int)x, (int)y);
+                        Sprite sprite = MousePicker2.selectObject(this, mousePos.get(0), mousePos.get(1), mousePos.get(2), 0);
+                        //MousePicker2.select(this, (int) posX, (int) posY);
+                        if(sprite!=null) {
+                            System.out.println(sprite.getPosition());
+                        } else {
+                            System.out.println("null");
+                        }
+                    } catch(Exception ex) {
+                        ex.printStackTrace();
+                    }*/
                     //System.out.println(((float)(posX*2/paletteSize.getXInt())-1.f) + ", " + ((float)(2-posY*2/paletteSize.getYInt())-1.f));
 
                     //System.out.println(camera);
-                    camera.updateViewMatrix();
+
+                    //camera.updateViewMatrix();
+
 
                     if(this.window != null) {
-
-                        Sprite sprite = selectionDetector.selectGameItem(sprites, this.window, (int)posX, (int)posY, camera);
-
+                        selectionDetector.selectGameItem(this, (int)posX, (int)posY);
                     }
                     //System.out.println(sprite!=null ? sprite.getPosition() : "null");
                 } else if(action == GLFW_RELEASE) {
@@ -91,7 +128,8 @@ public class Palette {
                         Sprite sprite = sprites.get(i);
 
                         if(sprite instanceof Clickable) {
-                            ((Clickable) sprite).setClicked(false);
+                            if(((Clickable) sprite).getClicked())
+                                ((Clickable) sprite).setClicked(false);
                         }
                     }
                 }
@@ -109,10 +147,10 @@ public class Palette {
 
         paletteHandler.onRenderStart();
 
+        window.enableTransperency();
+
         while(!window.getShouldClose()) {
             //shaderProgram.bind();
-
-
 
             window.clearScreen();
 
@@ -148,35 +186,44 @@ public class Palette {
                 window.updateProjectionMatrix();
             }
 
-
-
             for(int index = 0; index < sprites.size(); index++) {
 
                 Sprite sprite = sprites.get(index);
                 SpriteData data = spriteData.get(sprite);
 
+                /*if(data.getOpacity() > 0.99f) {
+                    window.disableTransparency();
+                } else {
+                    window.enableTransperency();
+                }*/
+                if(!data.isEnabled() && data.getOpacity()<=0.5e-6f)
+                    continue;
                 ObjectElement objectElement = sprite.getObjectElement();
 
                 ShaderProgram shaderProgram = objectElement.getShaderProgram(this);
                 shaderProgram.bind();
 
-                if(isResized) {
+                //if(isResized)
+                {
                     Matrix4f projectionMatrix = transformation.getProjectionMatrix(window.getFOV(), paletteSize.getXInt(), paletteSize.getYInt(), window.getZNEAR(), window.getZFAR());
                     shaderProgram.setUniform("projectionMatrix", projectionMatrix);
                 }
-                objectElement.setShaderProgram(this, sprite, shaderProgram);
+                objectElement.setShaderProgram(this, sprite, data, shaderProgram);
 
                 data.eventTickPassed();
                 List<EffectData> effects = data.getEffects();
                 for(int eventIndex = 0; eventIndex < effects.size(); eventIndex++) {
                     EffectData effectData = effects.get(eventIndex);
                     if(effectData.getInterval().isWait())
-                        effectData.getEffect().onInvoked(this, sprite, effectData.getInterval().getIntervalPercent(), effectData.getParameters());
+                        effectData.getEffect().onInvoked(this, sprite, data, effectData.getInterval().getIntervalPercent(), effectData.getParameters());
                 }
 
-                objectElement.render();
+                //if(data.getOpacity() >= 0.01f)
+                    objectElement.render();
 
                 shaderProgram.unbind();
+
+                //window.disableTransparency();
             }
 
             window.swapBuffer();
@@ -202,6 +249,9 @@ public class Palette {
             sprites.get(index).getObjectElement().cleanUp();
         }
         paletteHandler.onRenderFinish();
+
+
+        System.exit(0);
     }
 
     public void stop() {
@@ -222,11 +272,36 @@ public class Palette {
         return data;
     }
 
+    public void deleteSprite(Sprite sprite) {
+        sprites.remove(sprite);
+        spriteData.remove(sprite);
+    }
+
     public Camera getCamera() {
         return camera;
     }
 
     public Window getWindow() {
         return window;
+    }
+
+    public double getPaletteSizeX() {
+        return paletteSize.getX();
+    }
+
+    public double getPaletteSizeY() {
+        return paletteSize.getY();
+    }
+
+    public List<Sprite> getSprites() {
+        return sprites;
+    }
+
+    public Point getPaletteSize() {
+        return new Point(paletteSize);
+    }
+
+    public SpriteData getSpriteData(Sprite gameItem) {
+        return spriteData.get(gameItem);
     }
 }
